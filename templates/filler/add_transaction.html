@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Record Transaction - Gas Masters</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #fafafa;
+            min-height: 100vh;
+            padding: 30px 20px;
+        }
+
+        .transaction-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 0;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .transaction-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            padding: 30px 30px;
+            position: relative;
+        }
+
+        .back-to-dashboard {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .back-to-dashboard:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            color: white;
+            text-decoration: none;
+            transform: translateY(-1px);
+        }
+
+        .transaction-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .transaction-icon i {
+            font-size: 2rem;
+            color: white;
+        }
+
+        .transaction-header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .transaction-header p {
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+
+        .form-container {
+            padding: 30px;
+        }
+
+        .form-section h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .form-section h3 i {
+            color: #667eea;
+            font-size: 1.3rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #444;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .form-control, .form-select {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 14px 18px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            background: #fafafa;
+            margin-bottom: 15px;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            background: white;
+            outline: none;
+        }
+
+        .form-control::placeholder {
+            color: #999;
+            font-style: italic;
+        }
+
+        .calculation-display {
+            background: linear-gradient(135deg, #F9F9BD 0%, #FFF5CC 100%);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .calculation-display .label {
+            font-size: 0.85rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .calculation-display .value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .calculation-display .currency {
+            font-size: 1.5rem;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 14px 30px;
+            color: white;
+            font-size: 1rem;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-submit:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 14px 30px;
+            font-weight: 700;
+            color: white;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+            color: white;
+            text-decoration: none;
+        }
+
+        .alert {
+            border-radius: 12px;
+            margin-bottom: 25px;
+            border: none;
+            padding: 15px 20px;
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+            border-left: 4px solid #667eea;
+            padding: 16px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .info-box i {
+            color: #667eea;
+            margin-right: 10px;
+            font-size: 1.1rem;
+        }
+
+        .info-box p {
+            margin: 0;
+            color: #555;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .button-group .btn {
+            flex: 1;
+        }
+
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            margin-right: -0.75rem;
+            margin-left: -0.75rem;
+        }
+
+        .col-md-6 {
+            position: relative;
+            width: 100%;
+            padding-right: 0.75rem;
+            padding-left: 0.75rem;
+            flex: 0 0 auto;
+        }
+
+        .col-md-6 {
+            width: 100%;
+            max-width: 100%;
+        }
+
+        @media (min-width: 768px) {
+            .col-md-6 {
+                flex: 0 0 auto;
+                width: 50%;
+                max-width: 50%;
+            }
+        }
+
+        .form-control, .form-select {
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        @media (max-width: 768px) {
+            .transaction-container {
+                border-radius: 0;
+            }
+
+            .form-container {
+                padding: 30px 20px;
+            }
+
+            .transaction-header {
+                padding: 30px 20px;
+            }
+
+            .transaction-header h1 {
+                font-size: 1.6rem;
+            }
+
+            .button-group {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .calculation-display .value {
+                font-size: 2rem;
+            }
+        }
+
+        .text-muted {
+            color: #6c757d !important;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="transaction-container">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="transaction-header">
+            <a href="{{ url_for('filler.dashboard') }}" class="back-to-dashboard">
+                <i class="fas fa-arrow-left"></i>
+                Back to Dashboard
+            </a>
+            <div class="transaction-icon">
+                <i class="fas fa-clipboard-list"></i>
+            </div>
+            <h1>Record Transaction</h1>
+            <p>{{ depot.name }} - Record gas dispensing</p>
+        </div>
+
+        <form method="POST" id="transactionForm" class="form-container">
+            {{ form.hidden_tag() }}
+
+            <div class="info-box">
+                <i class="fas fa-info-circle"></i>
+                <p><strong>Current Inventory:</strong> {{ "%.2f"|format(depot.current_inventory) }} kg available</p>
+            </div>
+
+            <div class="form-section">
+                <h3><i class="fas fa-clipboard-list"></i> Transaction Details</h3>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Depot</label>
+                            <input type="text" class="form-control" value="{{ depot.name }}" readonly style="background-color: #f8f9fa; cursor: not-allowed;">
+                            {{ form.depot_id(style="display: none;") }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            {{ form.amount_dispensed.label(class="form-label") }}
+                            {{ form.amount_dispensed(class="form-control", step="0.01", id="amountDispensed", oninput="calculateTotal()") }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            {{ form.price_per_kg.label(class="form-label") }}
+                            {{ form.price_per_kg(class="form-control", step="0.01", id="pricePerKg", oninput="calculateTotal()") }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Total Amount Display -->
+                <div class="calculation-display">
+                    <div class="label">Total Amount</div>
+                    <div class="value">
+                        <span class="currency">$</span><span id="totalAmount">0.00</span>
+                    </div>
+                </div>
+            </div>
+                
+            <div class="button-group">
+                <button type="submit" class="btn btn-submit">
+                    <i class="fas fa-save me-2"></i> Record Transaction
+                </button>
+                <a href="{{ url_for('filler.dashboard') }}" class="btn btn-secondary">
+                    <i class="fas fa-times me-2"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function calculateTotal() {
+            const amount = parseFloat(document.getElementById('amountDispensed').value) || 0;
+            const price = parseFloat(document.getElementById('pricePerKg').value) || 0;
+            const total = amount * price;
+            document.getElementById('totalAmount').textContent = total.toFixed(2);
+        }
+
+        // Calculate on page load if values exist
+        window.addEventListener('load', calculateTotal);
+    </script>
+</body>
+</html>

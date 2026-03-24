@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Allocate Gas - Gas Masters</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #fafafa;
+            min-height: 100vh;
+            padding: 30px 20px;
+        }
+
+        .allocation-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 0;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .allocation-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+            padding: 30px 30px;
+            position: relative;
+        }
+
+        .back-to-dashboard {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .back-to-dashboard:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            color: white;
+            text-decoration: none;
+            transform: translateY(-1px);
+        }
+
+        .allocation-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .allocation-icon i {
+            font-size: 2rem;
+            color: white;
+        }
+
+        .allocation-header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .allocation-header p {
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+
+        .allocation-body {
+            padding: 30px;
+        }
+
+        .inventory-alert {
+            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+            border-left: 4px solid #667eea;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .inventory-alert.warning {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffe5d0 100%);
+            border-left-color: #ffc107;
+        }
+
+        .inventory-alert h5 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .inventory-alert h5 i {
+            color: #667eea;
+        }
+
+        .inventory-alert.warning h5 i {
+            color: #ffc107;
+        }
+
+        .inventory-alert h3 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .inventory-alert.warning h3 {
+            color: #ff9800;
+        }
+
+        .inventory-alert small {
+            color: #666;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .form-section {
+            margin-bottom: 20px;
+        }
+
+        .form-section h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .form-section h3 i {
+            color: #667eea;
+            font-size: 1.3rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #444;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .form-label .required {
+            color: #dc3545;
+            margin-left: 3px;
+        }
+
+        .form-control, .form-select {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 14px 18px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            background: #fafafa;
+            margin-bottom: 15px;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            background: white;
+            outline: none;
+        }
+
+        .form-control::placeholder {
+            color: #999;
+            font-style: italic;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 14px 30px;
+            color: white;
+            font-size: 1rem;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-submit:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+            color: white;
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-cancel {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 14px 30px;
+            font-weight: 700;
+            color: white;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-cancel:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+            color: white;
+            text-decoration: none;
+        }
+
+        .btn-purchase {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 14px 30px;
+            font-weight: 700;
+            color: white;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+        }
+
+        .btn-purchase:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.5);
+            color: white;
+            text-decoration: none;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .button-group .btn {
+            flex: 1;
+        }
+
+        .alert {
+            border-radius: 12px;
+            margin-bottom: 25px;
+            border: none;
+            padding: 15px 20px;
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+            border-left: 4px solid #667eea;
+            padding: 16px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .info-box i {
+            color: #667eea;
+            margin-right: 10px;
+            font-size: 1.1rem;
+        }
+
+        .info-box p {
+            margin: 0;
+            color: #555;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        /* Bootstrap grid system */
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            margin-right: -0.75rem;
+            margin-left: -0.75rem;
+        }
+
+        .col-md-6 {
+            position: relative;
+            width: 100%;
+            padding-right: 0.75rem;
+            padding-left: 0.75rem;
+            flex: 0 0 auto;
+        }
+
+        /* Mobile first - all columns stack */
+        .col-md-6 {
+            width: 100%;
+            max-width: 100%;
+        }
+
+        /* Tablet and desktop - responsive columns */
+        @media (min-width: 768px) {
+            .col-md-6 {
+                flex: 0 0 auto;
+                width: 50%;
+                max-width: 50%;
+            }
+        }
+
+        /* Ensure form controls work within grid */
+        .form-control, .form-select {
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        @media (max-width: 768px) {
+            .allocation-container {
+                border-radius: 0;
+            }
+
+            .allocation-body {
+                padding: 30px 20px;
+            }
+
+            .allocation-header {
+                padding: 30px 20px;
+            }
+
+            .allocation-header h1 {
+                font-size: 1.6rem;
+            }
+
+            .button-group {
+                flex-direction: column;
+                gap: 12px;
+            }
+        }
+
+        .text-muted {
+            color: #6c757d !important;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="allocation-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="allocation-header">
+            <a href="{{ url_for('manager.dashboard') }}" class="back-to-dashboard">
+                <i class="fas fa-arrow-left"></i>
+                Back to Dashboard
+            </a>
+            <div class="allocation-icon">
+                <i class="fas fa-truck-loading"></i>
+            </div>
+            <h1>Allocate Gas to Depot</h1>
+            <p>Distribute gas from inventory to depots</p>
+        </div>
+
+        <form method="POST" class="allocation-body">
+            {{ form.hidden_tag() }}
+
+            <div class="inventory-alert {% if unallocated <= 0 %}warning{% endif %}">
+                <h5><i class="fas fa-box"></i> Available Unallocated Inventory</h5>
+                <h3>{{ "%.2f"|format(unallocated) }} kg</h3>
+                {% if unallocated <= 0 %}
+                <small class="text-danger">
+                    <i class="fas fa-exclamation-triangle me-1"></i> 
+                    No unallocated inventory available. Please record a purchase first.
+                </small>
+                {% else %}
+                <small>This is the amount available to allocate to depots</small>
+                {% endif %}
+            </div>
+
+            <div class="form-section">
+                <h3><i class="fas fa-clipboard-list"></i> Allocation Details</h3>
+                <div class="info-box">
+                    <i class="fas fa-info-circle"></i>
+                    <p>Select a depot and specify the amount to allocate from available inventory.</p>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        {{ form.depot_id.label(class="form-label") }}
+                        <span class="required">*</span>
+                        {{ form.depot_id(class="form-select") }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form.amount.label(class="form-label") }}
+                        <span class="required">*</span>
+                        {{ form.amount(class="form-control", step="0.01", max=unallocated if unallocated > 0 else 0, placeholder="Enter amount in kg") }}
+                        <small class="text-muted">Maximum available: {{ "%.2f"|format(unallocated) }} kg</small>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        {{ form.notes.label(class="form-label") }}
+                        {{ form.notes(class="form-control", placeholder="Optional notes about this allocation") }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button type="submit" class="btn btn-submit" {% if unallocated <= 0 %}disabled{% endif %}>
+                    <i class="fas fa-save me-2"></i> Allocate Gas
+                </button>
+                <a href="{{ url_for('manager.dashboard') }}" class="btn btn-cancel">
+                    <i class="fas fa-times me-2"></i> Cancel
+                </a>
+                {% if unallocated <= 0 %}
+                <a href="{{ url_for('manager.add_purchase') }}" class="btn btn-purchase">
+                    <i class="fas fa-shopping-cart me-2"></i> Record Purchase
+                </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

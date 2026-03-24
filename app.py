@@ -1,0 +1,161 @@
+from flask import Flask, render_template, request
+from config import Config
+from extensions import db, login_manager
+import logging
+from logging.handlers import RotatingFileHandler
+import os
+
+def create_app():
+    app = Flask(__name__)
+    app.config.from_object(Config)
+    
+    # Initialize extensions
+    db.init_app(app)
+    login_manager.init_app(app)
+    login_manager.login_view = 'auth.login'
+    login_manager.login_message = 'Please log in to access this page.'
+    login_manager.session_protection = 'strong'
+    
+    from models import User
+    
+    @login_manager.user_loader
+    def load_user(user_id):
+        try:
+            return User.query.get(int(user_id))
+        except Exception as e:
+            app.logger.error(f'Error loading user {user_id}: {str(e)}')
+            return None
+    
+    # Auto-initialize database on first run (for Render free tier)
+    with app.app_context():
+        try:
+            # Try to create tables if they don't exist
+            db.create_all()
+            
+            # Check if we need to create initial admin user
+            from models import User, Depot
+            admin_exists = User.query.filter_by(username='admin').first()
+            
+            if not admin_exists:
+                # Create initial admin user
+                from datetime import datetime
+                admin = User(
+                    username='admin',
+                    first_name='Admin',
+                    surname='User',
+                    phone_number='1234567890',
+                    role='manager',
+                    status='active',
+                    approved_at=datetime.utcnow()
+                )
+                admin.set_password('admin123')
+                db.session.add(admin)
+                
+                # Create sample depot
+                depot = Depot(
+                    name='Main Depot',
+                    location='Main Location',
+                    current_inventory=100.0
+                )
+                db.session.add(depot)
+                
+                db.session.commit()
+                app.logger.info('Database initialized with admin user and sample depot')
+        except Exception as e:
+            app.logger.error(f'Database initialization error: {str(e)}')
+            # Continue anyway - tables might already exist
+    
+    # Enhanced security headers
+    @app.after_request
+    def set_security_headers(response):
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+        response.headers['X-XSS-Protection'] = '1; mode=block'
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+        response.headers['Content-Security-Policy'] = "default-src 'self' 'unsafe-inline' 'unsafe-eval'; img-src 'self' data: https:;"
+        response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+        response.headers['Permissions-Policy'] = 'geolocation=(), microphone=(), camera=()'
+        
+        # Prevent caching for authenticated pages to stop back button access after logout
+        if request.endpoint and request.endpoint not in ['auth.login', 'auth.register', 'static']:
+            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, post-check=0, pre-check=0'
+            response.headers['Pragma'] = 'no-cache'
+            response.headers['Expires'] = '0'
+        
+        return response
+    
+    # Comprehensive error handlers
+    @app.errorhandler(400)
+    def bad_request_error(error):
+        app.logger.warning(f'Bad request: {request.url}')
+        return render_template('error.html', 
+                             error_code=400,
+                             error_title='Bad Request',
+                             error_message='The request could not be understood by the server.'), 400
+    
+    @app.errorhandler(403)
+    def forbidden_error(error):
+        app.logger.warning(f'Forbidden access attempt: {request.url}')
+        return render_template('error.html',
+                             error_code=403,
+                             error_title='Access Denied',
+                             error_message='You do not have permission to access this resource.'), 403
+    
+    @app.errorhandler(404)
+    def not_found_error(error):
+        app.logger.info(f'Page not found: {request.url}')
+        return render_template('error.html',
+                             error_code=404,
+                             error_title='Page Not Found',
+                             error_message='The page you are looking for does not exist.'), 404
+    
+    @app.errorhandler(500)
+    def internal_error(error):
+        db.session.rollback()
+        app.logger.error(f'Internal server error: {str(error)}')
+        return render_template('error.html',
+                             error_code=500,
+                             error_title='Internal Server Error',
+                             error_message='An unexpected error occurred. Please try again later.'), 500
+    
+    @app.errorhandler(503)
+    def service_unavailable_error(error):
+        app.logger.error(f'Service unavailable: {str(error)}')
+        return render_template('error.html',
+                             error_code=503,
+                             error_title='Service Unavailable',
+                             error_message='The service is temporarily unavailable. Please try again later.'), 503
+    
+    # Logging configuration
+    if not app.debug:
+        if not os.path.exists('logs'):
+            os.mkdir('logs')
+        file_handler = RotatingFileHandler('logs/gas_masters.log', maxBytes=10240000, backupCount=10)
+        file_handler.setFormatter(logging.Formatter(
+            '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+        ))
+        file_handler.setLevel(logging.INFO)
+        app.logger.addHandler(file_handler)
+        app.logger.setLevel(logging.INFO)
+        app.logger.info('Gas Masters startup')
+    
+    # Register blueprints
+    from routes.auth import auth_bp
+    from routes.main import main_bp
+    from routes.filler import filler_bp
+    from routes.manager import manager_bp
+    from routes.reports import reports_bp
+    
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(main_bp)
+    app.register_blueprint(filler_bp, url_prefix='/filler')
+    app.register_blueprint(manager_bp, url_prefix='/manager')
+    app.register_blueprint(reports_bp, url_prefix='/reports')
+    
+    return app
+
+if __name__ == '__main__':
+    app = create_app()
+    with app.app_context():
+        db.create_all()
+    app.run(debug=True)

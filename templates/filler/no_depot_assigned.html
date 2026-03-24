@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}No Depot Assigned - Gas Masters{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card border-warning">
+            <div class="card-header bg-warning text-dark">
+                <h4 class="mb-0"><i class="fas fa-exclamation-triangle"></i> No Depot Assigned</h4>
+            </div>
+            <div class="card-body text-center py-5">
+                <i class="fas fa-warehouse fa-5x text-warning mb-4"></i>
+                <h3>You Haven't Been Assigned to a Depot Yet</h3>
+                <p class="lead text-muted">
+                    Your account is active, but you need to be assigned to a depot before you can start recording transactions.
+                </p>
+                
+                <div class="alert alert-info mt-4">
+                    <h5><i class="fas fa-info-circle"></i> What to do next:</h5>
+                    <ol class="text-start">
+                        <li>Contact your manager or supervisor</li>
+                        <li>Request to be assigned to a specific depot</li>
+                        <li>Once assigned, you'll be able to access your dashboard and record transactions</li>
+                    </ol>
+                </div>
+                
+                <div class="mt-4">
+                    <p class="text-muted">
+                        <i class="fas fa-user"></i> Logged in as: <strong>{{ current_user.username }}</strong><br>
+                        <i class="fas fa-id-card"></i> Name: <strong>{{ current_user.full_name }}</strong><br>
+                        <i class="fas fa-phone"></i> Phone: <strong>{{ current_user.phone_number }}</strong>
+                    </p>
+                </div>
+                
+                <a href="{{ url_for('auth.logout') }}" class="btn btn-secondary mt-3">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
