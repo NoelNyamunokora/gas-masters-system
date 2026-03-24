@@ -126,18 +126,24 @@ def create_app():
                              error_title='Service Unavailable',
                              error_message='The service is temporarily unavailable. Please try again later.'), 503
     
-    # Logging configuration
+    # Logging configuration (use /tmp for Render compatibility)
     if not app.debug:
-        if not os.path.exists('logs'):
-            os.mkdir('logs')
-        file_handler = RotatingFileHandler('logs/gas_masters.log', maxBytes=10240000, backupCount=10)
-        file_handler.setFormatter(logging.Formatter(
-            '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
-        ))
-        file_handler.setLevel(logging.INFO)
-        app.logger.addHandler(file_handler)
-        app.logger.setLevel(logging.INFO)
-        app.logger.info('Gas Masters startup')
+        try:
+            log_dir = '/tmp/logs' if os.environ.get('RENDER') else 'logs'
+            if not os.path.exists(log_dir):
+                os.makedirs(log_dir, exist_ok=True)
+            file_handler = RotatingFileHandler(f'{log_dir}/gas_masters.log', maxBytes=10240000, backupCount=10)
+            file_handler.setFormatter(logging.Formatter(
+                '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+            ))
+            file_handler.setLevel(logging.INFO)
+            app.logger.addHandler(file_handler)
+            app.logger.setLevel(logging.INFO)
+            app.logger.info('Gas Masters startup')
+        except Exception as e:
+            # If file logging fails, just use console logging
+            app.logger.setLevel(logging.INFO)
+            app.logger.info(f'File logging disabled: {str(e)}')
     
     # Register blueprints
     from routes.auth import auth_bp
