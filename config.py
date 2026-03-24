@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+import sys
 
 load_dotenv()
 
@@ -7,22 +8,19 @@ class Config:
     # Security
     SECRET_KEY = os.environ.get('SECRET_KEY') or os.urandom(32).hex()
     
-    # Database configuration - supports both PostgreSQL (Render) and MySQL (local)
+    # Database configuration - PostgreSQL for production (Render)
     DATABASE_URL = os.environ.get('DATABASE_URL')
     
-    if DATABASE_URL:
+    if not DATABASE_URL:
+        print("WARNING: DATABASE_URL not set! Using SQLite fallback.", file=sys.stderr)
+        print("For production, set DATABASE_URL environment variable.", file=sys.stderr)
+        SQLALCHEMY_DATABASE_URI = 'sqlite:///gas_masters.db'
+    else:
         # Render PostgreSQL - fix the URL if needed
         if DATABASE_URL.startswith('postgres://'):
             DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
         SQLALCHEMY_DATABASE_URI = DATABASE_URL
-    else:
-        # Local MySQL fallback
-        DB_HOST = os.environ.get('DB_HOST', 'localhost')
-        DB_PORT = int(os.environ.get('DB_PORT', 3307))
-        DB_USER = os.environ.get('DB_USER', 'root')
-        DB_PASSWORD = os.environ.get('DB_PASSWORD', '#banana1')
-        DB_NAME = os.environ.get('DB_NAME', 'gas_masters')
-        SQLALCHEMY_DATABASE_URI = f'mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
+        print(f"Using database: {SQLALCHEMY_DATABASE_URI.split('@')[0]}@...", file=sys.stderr)
     
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {
