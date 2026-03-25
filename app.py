@@ -166,6 +166,53 @@ def create_app():
     app.register_blueprint(manager_bp, url_prefix='/manager')
     app.register_blueprint(reports_bp, url_prefix='/reports')
     
+    # Emergency database initialization endpoint
+    @app.route('/init-database-emergency')
+    def init_database_emergency():
+        """Emergency endpoint to force database initialization"""
+        try:
+            from models import User, Depot, Purchase, DepotAllocation, Transaction
+            from datetime import datetime
+            
+            # Force create all tables
+            db.create_all()
+            
+            # Check if admin exists
+            admin_exists = User.query.filter_by(username='admin').first()
+            
+            if not admin_exists:
+                # Create admin user
+                admin = User(
+                    username='admin',
+                    first_name='Admin',
+                    surname='User',
+                    phone_number='1234567890',
+                    role='manager',
+                    status='active',
+                    approved_at=datetime.utcnow()
+                )
+                admin.set_password('admin123')
+                db.session.add(admin)
+                
+                # Create Main Depot
+                main_depot_exists = Depot.query.filter_by(name='Main Depot').first()
+                if not main_depot_exists:
+                    depot = Depot(
+                        name='Main Depot',
+                        location='Main Location',
+                        current_inventory=100.0
+                    )
+                    db.session.add(depot)
+                
+                db.session.commit()
+                return '<h1>✓ Database Initialized Successfully!</h1><p>Admin user created: admin/admin123</p><p>Main Depot created</p><p><a href="/">Go to Login</a></p>', 200
+            else:
+                return '<h1>✓ Database Already Initialized</h1><p>Admin user already exists</p><p><a href="/">Go to Login</a></p>', 200
+                
+        except Exception as e:
+            db.session.rollback()
+            return f'<h1>✗ Database Initialization Failed</h1><p>Error: {str(e)}</p><p>Check Render logs for details</p>', 500
+    
     return app
 
 if __name__ == '__main__':
