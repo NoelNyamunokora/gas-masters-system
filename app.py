@@ -27,16 +27,19 @@ def create_app():
             return None
     
     # Auto-initialize database on first run (for Render free tier)
+    # This only creates tables and initial data if they don't exist
     with app.app_context():
         try:
-            # Try to create tables if they don't exist
+            # Create tables only if they don't exist (safe operation)
             db.create_all()
+            app.logger.info('Database tables verified/created')
             
-            # Check if we need to create initial admin user
+            # Check if we need to create initial admin user (only if no admin exists)
             from models import User, Depot
             admin_exists = User.query.filter_by(username='admin').first()
             
             if not admin_exists:
+                app.logger.info('No admin user found - creating initial admin user')
                 # Create initial admin user
                 from datetime import datetime
                 admin = User(
@@ -51,19 +54,24 @@ def create_app():
                 admin.set_password('admin123')
                 db.session.add(admin)
                 
-                # Create sample depot
-                depot = Depot(
-                    name='Main Depot',
-                    location='Main Location',
-                    current_inventory=100.0
-                )
-                db.session.add(depot)
+                # Check if Main Depot exists before creating
+                main_depot_exists = Depot.query.filter_by(name='Main Depot').first()
+                if not main_depot_exists:
+                    depot = Depot(
+                        name='Main Depot',
+                        location='Main Location',
+                        current_inventory=100.0
+                    )
+                    db.session.add(depot)
                 
                 db.session.commit()
                 app.logger.info('Database initialized with admin user and sample depot')
+            else:
+                app.logger.info('Admin user exists - skipping initialization')
         except Exception as e:
+            db.session.rollback()
             app.logger.error(f'Database initialization error: {str(e)}')
-            # Continue anyway - tables might already exist
+            # Continue anyway - don't crash the app
     
     # Enhanced security headers
     @app.after_request
