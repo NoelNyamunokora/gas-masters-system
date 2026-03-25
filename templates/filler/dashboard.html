@@ -340,14 +340,31 @@
 
         /* Notification Bell */
         .notification-bell {
-            position: relative;
+            width: 50px;
+            height: 50px;
+            min-width: 50px;
+            min-height: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
-            padding: 0.5rem;
-            transition: transform 0.3s ease;
+            position: relative;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+            flex-shrink: 0;
         }
 
         .notification-bell:hover {
-            transform: scale(1.1);
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .notification-bell img {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
         }
 
         .notification-badge {
