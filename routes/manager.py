@@ -200,7 +200,10 @@ def allocations():
 @manager_required
 def add_allocation():
     form = AllocationForm()
-    form.depot_id.choices = [(d.id, f"{d.name} - {d.location}") for d in Depot.query.all()]
+    # Exclude "Main Depot" or "Main Location" from allocation choices
+    form.depot_id.choices = [(d.id, f"{d.name} - {d.location}") 
+                             for d in Depot.query.all() 
+                             if d.name.lower() not in ['main depot', 'main location']]
     
     # Calculate unallocated inventory for display
     total_purchased = db.session.query(func.sum(Purchase.amount)).scalar() or 0
