@@ -219,4 +219,7 @@ if __name__ == '__main__':
     app = create_app()
     with app.app_context():
         db.create_all()
-    app.run(debug=True)
+    # Run on all network interfaces (0.0.0.0) to allow access from other computers on the network
+    # Access from your PC: http://localhost:5000
+    # Access from other computers: http://YOUR_PC_IP:5000 (e.g., http://192.168.1.100:5000)
+    app.run(host='0.0.0.0', port=5000, debug=True)
